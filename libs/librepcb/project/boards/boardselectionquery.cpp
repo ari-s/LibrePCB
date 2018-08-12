@@ -70,6 +70,7 @@ int BoardSelectionQuery::getResultCount() const noexcept
 {
     return  //mResultDeviceInstances.count() +
             mResultFootprints.count() +
+            mResultNetSegments.count() +
             mResultNetPoints.count() +
             mResultNetLines.count() +
             mResultVias.count() +
@@ -136,6 +137,28 @@ void BoardSelectionQuery::addNetPointsOfNetLines(NetLineFilters lf, NetPointFilt
                 mResultNetPoints.insert(&netline->getEndPoint());
             }
         }
+    }
+}
+
+void BoardSelectionQuery::addNetPointsOfVias() noexcept
+{
+    foreach (const BI_Via* via, mResultVias) {
+        foreach (BI_NetPoint* netpoint, via->getNetPoints()) {
+            mResultNetPoints.insert(netpoint);
+        }
+    }
+}
+
+void BoardSelectionQuery::addNetSegmentsOfSelectedItems() noexcept
+{
+    foreach (BI_NetPoint* netpoint, mResultNetPoints) {
+        mResultNetSegments.insert(&netpoint->getNetSegment());
+    }
+    foreach (BI_NetLine* netline, mResultNetLines) {
+        mResultNetSegments.insert(&netline->getNetSegment());
+    }
+    foreach (BI_Via* via, mResultVias) {
+        mResultNetSegments.insert(&via->getNetSegment());
     }
 }
 

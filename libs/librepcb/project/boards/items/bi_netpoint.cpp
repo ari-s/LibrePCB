@@ -199,7 +199,7 @@ UnsignedLength BI_NetPoint::getMaxLineWidth() const noexcept
 void BI_NetPoint::setLayer(GraphicsLayer& layer)
 {
     if (&layer != mLayer) {
-        if (isUsed() || isAttached() || (!layer.isCopperLayer())) {
+        if (isUsed() || (isAttached() && isAddedToBoard()) || (!layer.isCopperLayer())) {
             throw LogicError(__FILE__, __LINE__);
         }
         mLayer = &layer;

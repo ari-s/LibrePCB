@@ -90,6 +90,7 @@ class BoardSelectionQuery final : public QObject
         // Getters
         //const QSet<BI_Device*>& getDeviceInstances() const noexcept { return mResultDeviceInstances; }
         const QSet<BI_Footprint*>& getFootprints() const noexcept { return mResultFootprints; }
+        const QSet<BI_NetSegment*>& getNetSegments() const noexcept { return mResultNetSegments; }
         const QSet<BI_NetPoint*>& getNetPoints() const noexcept { return mResultNetPoints; }
         const QSet<BI_NetLine*>& getNetLines() const noexcept { return mResultNetLines; }
         const QSet<BI_Via*>& getVias() const noexcept { return mResultVias; }
@@ -106,6 +107,8 @@ class BoardSelectionQuery final : public QObject
         void addSelectedNetPoints(NetPointFilters f) noexcept;
         void addSelectedNetLines(NetLineFilters f) noexcept;
         void addNetPointsOfNetLines(NetLineFilters lf, NetPointFilters pf) noexcept;
+        void addNetPointsOfVias() noexcept;
+        void addNetSegmentsOfSelectedItems() noexcept;
         void addSelectedPlanes() noexcept;
         void addSelectedPolygons() noexcept;
         void addSelectedBoardStrokeTexts() noexcept;
@@ -132,6 +135,7 @@ class BoardSelectionQuery final : public QObject
         // query result
         //QSet<BI_Device*> mResultDeviceInstances;
         QSet<BI_Footprint*> mResultFootprints;
+        QSet<BI_NetSegment*> mResultNetSegments;
         QSet<BI_NetPoint*> mResultNetPoints;
         QSet<BI_NetLine*> mResultNetLines;
         QSet<BI_Via*> mResultVias;

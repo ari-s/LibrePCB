@@ -279,10 +279,6 @@ void BI_NetSegment::addElements(const QList<BI_Via*>& vias,
                                 const QList<BI_NetPoint*>& netpoints,
                                 const QList<BI_NetLine*>& netlines)
 {
-    if (!isAddedToBoard()) {
-        throw LogicError(__FILE__, __LINE__);
-    }
-
     ScopeGuardList sgl(netpoints.count() + netlines.count());
     foreach (BI_Via* via, vias) {
         if ((mVias.contains(via)) || (&via->getNetSegment() != this)) {
@@ -295,9 +291,9 @@ void BI_NetSegment::addElements(const QList<BI_Via*>& vias,
                 .arg(via->getUuid().toStr()));
         }
         // add to board
-        via->addToBoard(); // can throw
+        if (isAddedToBoard()) via->addToBoard(); // can throw
         mVias.append(via);
-        sgl.add([this, via](){via->removeFromBoard(); mVias.removeOne(via);});
+        sgl.add([this, via](){if (isAddedToBoard()) via->removeFromBoard(); mVias.removeOne(via);});
     }
     foreach (BI_NetPoint* netpoint, netpoints) {
         if ((mNetPoints.contains(netpoint)) || (&netpoint->getNetSegment() != this)) {
@@ -310,9 +306,9 @@ void BI_NetSegment::addElements(const QList<BI_Via*>& vias,
                 .arg(netpoint->getUuid().toStr()));
         }
         // add to board
-        netpoint->addToBoard(); // can throw
+        if (isAddedToBoard()) netpoint->addToBoard(); // can throw
         mNetPoints.append(netpoint);
-        sgl.add([this, netpoint](){netpoint->removeFromBoard(); mNetPoints.removeOne(netpoint);});
+        sgl.add([this, netpoint](){if (isAddedToBoard()) netpoint->removeFromBoard(); mNetPoints.removeOne(netpoint);});
     }
     foreach (BI_NetLine* netline, netlines) {
         if ((mNetLines.contains(netline)) || (&netline->getNetSegment() != this)) {
@@ -325,9 +321,9 @@ void BI_NetSegment::addElements(const QList<BI_Via*>& vias,
                 .arg(netline->getUuid().toStr()));
         }
         // add to board
-        netline->addToBoard(); // can throw
+        if (isAddedToBoard()) netline->addToBoard(); // can throw
         mNetLines.append(netline);
-        sgl.add([this, netline](){netline->removeFromBoard(); mNetLines.removeOne(netline);});
+        sgl.add([this, netline](){if (isAddedToBoard()) netline->removeFromBoard(); mNetLines.removeOne(netline);});
     }
 
     if (!areAllNetPointsConnectedTogether()) {
@@ -343,37 +339,33 @@ void BI_NetSegment::removeElements(const QList<BI_Via*>& vias,
                                    const QList<BI_NetPoint*>& netpoints,
                                    const QList<BI_NetLine*>& netlines)
 {
-    if (!isAddedToBoard()) {
-        throw LogicError(__FILE__, __LINE__);
-    }
-
     ScopeGuardList sgl(netpoints.count() + netlines.count());
     foreach (BI_NetLine* netline, netlines) {
         if (!mNetLines.contains(netline)) {
             throw LogicError(__FILE__, __LINE__);
         }
         // remove from board
-        netline->removeFromBoard(); // can throw
+        if (isAddedToBoard()) netline->removeFromBoard(); // can throw
         mNetLines.removeOne(netline);
-        sgl.add([this, netline](){netline->addToBoard(); mNetLines.append(netline);});
+        sgl.add([this, netline](){if (isAddedToBoard()) netline->addToBoard(); mNetLines.append(netline);});
     }
     foreach (BI_NetPoint* netpoint, netpoints) {
         if (!mNetPoints.contains(netpoint)) {
             throw LogicError(__FILE__, __LINE__);
         }
         // remove from board
-        netpoint->removeFromBoard(); // can throw
+        if (isAddedToBoard()) netpoint->removeFromBoard(); // can throw
         mNetPoints.removeOne(netpoint);
-        sgl.add([this, netpoint](){netpoint->addToBoard(); mNetPoints.append(netpoint);});
+        sgl.add([this, netpoint](){if (isAddedToBoard()) netpoint->addToBoard(); mNetPoints.append(netpoint);});
     }
     foreach (BI_Via* via, vias) {
         if (!mVias.contains(via)) {
             throw LogicError(__FILE__, __LINE__);
         }
         // remove from board
-        via->removeFromBoard(); // can throw
+        if (isAddedToBoard()) via->removeFromBoard(); // can throw
         mVias.removeOne(via);
-        sgl.add([this, via](){via->addToBoard(); mVias.append(via);});
+        sgl.add([this, via](){if (isAddedToBoard()) via->addToBoard(); mVias.append(via);});
     }
 
     if (!areAllNetPointsConnectedTogether()) {
@@ -492,6 +484,12 @@ bool BI_NetSegment::isSelected() const noexcept
 
 void BI_NetSegment::setSelected(bool selected) noexcept
 {
+    foreach (BI_Via* via, mVias)
+        via->setSelected(selected);
+    foreach (BI_NetPoint* netpoint, mNetPoints)
+        netpoint->setSelected(selected);
+    foreach (BI_NetLine* netline, mNetLines)
+        netline->setSelected(selected);
     BI_Base::setSelected(selected);
 }
 
