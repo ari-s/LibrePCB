@@ -210,11 +210,11 @@ void CmdFlipSelectedBoardItems::flipDevice(BI_Device& device, const Point& cente
 {
     // disconnect all netpoints/netlines
     foreach (BI_FootprintPad* pad, device.getFootprint().getPads()) {
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
-            CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(*netpoint);
-            cmd->setPadToAttach(nullptr);
-            execNewChildCmd(cmd); // can throw
-        }
+        //foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
+        //    CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(*netpoint);
+        //    cmd->setPadToAttach(nullptr);
+        //    execNewChildCmd(cmd); // can throw
+        //}
     }
 
     // flip device
@@ -228,11 +228,11 @@ void CmdFlipSelectedBoardItems::flipDevice(BI_Device& device, const Point& cente
         //    // netline/netpoint must be flipped too (place via and change layer)
         //
         //}
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
-            CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(*netpoint);
-            cmd->setPadToAttach(pad);
-            execNewChildCmd(cmd); // can throw
-        }
+        //foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
+        //    CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(*netpoint);
+        //    cmd->setPadToAttach(pad);
+        //    execNewChildCmd(cmd); // can throw
+        //}
     }
 }
 

@@ -53,7 +53,7 @@ namespace project {
 
 BI_FootprintPad::BI_FootprintPad(BI_Footprint& footprint, const Uuid& padUuid) :
     BI_Base(footprint.getBoard()), mFootprint(footprint), mFootprintPad(nullptr),
-    mPackagePad(nullptr), mComponentSignalInstance(nullptr)
+    mPackagePad(nullptr), mComponentSignalInstance(nullptr), mRegisteredNetPoint(nullptr)
 {
     mFootprintPad = mFootprint.getLibFootprint().getPads().get(padUuid).get(); // can throw
     mPackagePad = mFootprint.getDeviceInstance().getLibPackage().getPads().get(padUuid).get(); // can throw
@@ -155,26 +155,24 @@ void BI_FootprintPad::registerNetPoint(BI_NetPoint& netpoint)
 {
     if ((!isAddedToBoard()) || (!mComponentSignalInstance)
         || (netpoint.getBoard() != mBoard)
-        || (mRegisteredNetPoints.contains(netpoint.getLayer().getName()))
-        || (&netpoint.getNetSignalOfNetSegment() != mComponentSignalInstance->getNetSignal())
-        || (!netpoint.getLayer().isCopperLayer())
-        || (!isOnLayer(netpoint.getLayer().getName())))
+        || (mRegisteredNetPoint)
+        || (&netpoint.getNetSignalOfNetSegment() != mComponentSignalInstance->getNetSignal()))
     {
         throw LogicError(__FILE__, __LINE__);
     }
-    mRegisteredNetPoints.insert(netpoint.getLayer().getName(), &netpoint);
+    mRegisteredNetPoint = &netpoint;
     netpoint.updateLines();
 }
 
 void BI_FootprintPad::unregisterNetPoint(BI_NetPoint& netpoint)
 {
     if ((!isAddedToBoard()) || (!mComponentSignalInstance)
-        || (getNetPointOfLayer(netpoint.getLayer().getName()) != &netpoint)
+        || (mRegisteredNetPoint != &netpoint)
         || (&netpoint.getNetSignalOfNetSegment() != mComponentSignalInstance->getNetSignal()))
     {
         throw LogicError(__FILE__, __LINE__);
     }
-    mRegisteredNetPoints.remove(netpoint.getLayer().getName());
+    mRegisteredNetPoint = nullptr;
     netpoint.updateLines();
 }
 
@@ -185,9 +183,7 @@ void BI_FootprintPad::updatePosition() noexcept
     mGraphicsItem->setPos(mPosition.toPxQPointF());
     updateGraphicsItemTransform();
     mGraphicsItem->updateCacheAndRepaint();
-    foreach (BI_NetPoint* netpoint, mRegisteredNetPoints) {
-        netpoint->setPosition(mPosition);
-    }
+    if (mRegisteredNetPoint) mRegisteredNetPoint->setPosition(mPosition);
 }
 
 /*****************************************************************************************

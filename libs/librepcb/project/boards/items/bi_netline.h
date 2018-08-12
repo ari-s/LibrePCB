@@ -60,8 +60,11 @@ class BI_NetLine final : public BI_Base, public SerializableObject
         BI_NetLine() = delete;
         BI_NetLine(const BI_NetLine& other) = delete;
         BI_NetLine(const BI_NetLine& other, BI_NetPoint& startPoint, BI_NetPoint& endPoint);
-        BI_NetLine(BI_NetSegment& segment, const SExpression& node);
-        BI_NetLine(BI_NetPoint& startPoint, BI_NetPoint& endPoint, const PositiveLength& width);
+        BI_NetLine(BI_NetSegment& segment, const SExpression& node,
+                   const QHash<BI_NetPoint*, QString>& netpointLayerMap,
+                   const QHash<Uuid, Uuid>& netPointReplacements);
+        BI_NetLine(BI_NetPoint& startPoint, BI_NetPoint& endPoint, GraphicsLayer& layer,
+                   const PositiveLength& width);
         ~BI_NetLine() noexcept;
 
         // Getters
@@ -72,7 +75,7 @@ class BI_NetLine final : public BI_Base, public SerializableObject
         BI_NetPoint& getEndPoint() const noexcept {return *mEndPoint;}
         BI_NetPoint* getOtherPoint(const BI_NetPoint& firstPoint) const noexcept;
         NetSignal& getNetSignalOfNetSegment() const noexcept;
-        GraphicsLayer& getLayer() const noexcept;
+        GraphicsLayer& getLayer() const noexcept {return *mLayer;}
         bool isAttached() const noexcept;
         bool isAttachedToFootprint() const noexcept;
         bool isAttachedToVia() const noexcept;
@@ -80,6 +83,7 @@ class BI_NetLine final : public BI_Base, public SerializableObject
         Path getSceneOutline(const Length& expansion = Length(0)) const noexcept;
 
         // Setters
+        //void setLayer(GraphicsLayer& layer);
         void setWidth(const PositiveLength& width) noexcept;
 
         // General Methods
@@ -117,6 +121,7 @@ class BI_NetLine final : public BI_Base, public SerializableObject
         Uuid mUuid;
         BI_NetPoint* mStartPoint;
         BI_NetPoint* mEndPoint;
+        GraphicsLayer* mLayer;
         PositiveLength mWidth;
 };
 

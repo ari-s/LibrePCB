@@ -70,14 +70,13 @@ class BI_NetPoint final : public BI_Base, public SerializableObject,
         BI_NetPoint(BI_NetSegment& segment, const BI_NetPoint& other, BI_FootprintPad* pad,
                     BI_Via* via);
         BI_NetPoint(BI_NetSegment& segment, const SExpression& node);
-        BI_NetPoint(BI_NetSegment& segment, GraphicsLayer& layer, const Point& position);
-        BI_NetPoint(BI_NetSegment& segment, GraphicsLayer& layer, BI_FootprintPad& pad);
-        BI_NetPoint(BI_NetSegment& segment, GraphicsLayer& layer, BI_Via& via);
+        BI_NetPoint(BI_NetSegment& segment, const Point& position);
+        BI_NetPoint(BI_NetSegment& segment, BI_FootprintPad& pad);
+        BI_NetPoint(BI_NetSegment& segment, BI_Via& via);
         ~BI_NetPoint() noexcept;
 
         // Getters
         const Uuid& getUuid() const noexcept {return mUuid;}
-        GraphicsLayer& getLayer() const noexcept {return *mLayer;}
         bool isAttachedToPad() const noexcept {return (mFootprintPad ? true : false);}
         bool isAttachedToVia() const noexcept {return (mVia ? true : false);}
         bool isAttached() const noexcept {return (isAttachedToPad() || isAttachedToVia());}
@@ -86,12 +85,12 @@ class BI_NetPoint final : public BI_Base, public SerializableObject,
         BI_FootprintPad* getFootprintPad() const noexcept {return mFootprintPad;}
         BI_Via* getVia() const noexcept {return mVia;}
         const QList<BI_NetLine*>& getLines() const noexcept {return mRegisteredLines;}
+        QSet<const GraphicsLayer*> getAllLayers() const noexcept;
         bool isUsed() const noexcept {return (mRegisteredLines.count() > 0);}
         UnsignedLength getMaxLineWidth() const noexcept;
         bool isSelectable() const noexcept override;
 
         // Setters
-        void setLayer(GraphicsLayer& layer);
         void setPadToAttach(BI_FootprintPad* pad);
         void setViaToAttach(BI_Via* via);
         void setPosition(const Point& position) noexcept;
@@ -135,7 +134,6 @@ class BI_NetPoint final : public BI_Base, public SerializableObject,
         BI_NetSegment& mNetSegment;
         Uuid mUuid;
         Point mPosition;
-        GraphicsLayer* mLayer;
         BI_FootprintPad* mFootprintPad; ///< only needed if the netpoint is attached to a pad
         BI_Via* mVia;                   ///< only needed if the netpoint is attached to a via
 

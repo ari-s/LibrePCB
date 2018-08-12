@@ -102,72 +102,72 @@ BI_NetSegment& CmdPlaceBoardNetPoint::createNewNetSegment(NetSignal& netsignal)
 BI_NetPoint* CmdPlaceBoardNetPoint::createNewNetPoint()
 {
     // get vias at given position
-    QList<BI_Via*> viasUnderCursor = mBoard.getViasAtScenePos(mPosition, nullptr);
-    if (viasUnderCursor.count() == 0) {
-        return createNewNetPointAtPad();
-    } else if (viasUnderCursor.count() == 1) {
-        BI_Via* via = viasUnderCursor.first();
-        BI_NetPoint* netpoint = via->getNetPointOfLayer(mLayer.getName());
-        if (netpoint) {
-            return netpoint;
-        } else {
-            BI_NetSegment& netsegment = via->getNetSegment();
-            CmdBoardNetSegmentAddElements* cmd = new CmdBoardNetSegmentAddElements(netsegment);
-            BI_NetPoint* netpoint = cmd->addNetPoint(mLayer, *via); Q_ASSERT(netpoint);
-            execNewChildCmd(cmd); // can throw
-            return netpoint;
-        }
-    } else {
+    //QList<BI_Via*> viasUnderCursor = mBoard.getViasAtScenePos(mPosition, nullptr);
+    //if (viasUnderCursor.count() == 0) {
+    //    return createNewNetPointAtPad();
+    //} else if (viasUnderCursor.count() == 1) {
+    //    BI_Via* via = viasUnderCursor.first();
+    //    BI_NetPoint* netpoint = via->getNetPointOfLayer(mLayer.getName());
+    //    if (netpoint) {
+    //        return netpoint;
+    //    } else {
+    //        BI_NetSegment& netsegment = via->getNetSegment();
+    //        CmdBoardNetSegmentAddElements* cmd = new CmdBoardNetSegmentAddElements(netsegment);
+    //        BI_NetPoint* netpoint = cmd->addNetPoint(mLayer, *via); Q_ASSERT(netpoint);
+    //        execNewChildCmd(cmd); // can throw
+    //        return netpoint;
+    //    }
+    //} else {
         throw RuntimeError(__FILE__, __LINE__, tr("Sorry, not yet implemented..."));
-    }
+    //}
 }
 
 BI_NetPoint* CmdPlaceBoardNetPoint::createNewNetPointAtPad()
 {
     // get pads at given position
-    QList<BI_FootprintPad*> padsUnderCursor = mBoard.getPadsAtScenePos(mPosition, &mLayer, nullptr);
-
-    if (padsUnderCursor.count() == 0) {
-        return createNewNetPointInLine();
-    } else if (padsUnderCursor.count() == 1) {
-        BI_FootprintPad* pad = padsUnderCursor.first();
-        NetSignal* netsignal = pad->getCompSigInstNetSignal();
-        if (!netsignal) {
-            throw RuntimeError(__FILE__, __LINE__, tr("The pin is not connected to any net."));
-        }
-        BI_NetSegment& netsegment = createNewNetSegment(*netsignal);
-        CmdBoardNetSegmentAddElements* cmd = new CmdBoardNetSegmentAddElements(netsegment);
-        BI_NetPoint* netpoint = cmd->addNetPoint(mLayer, *pad); Q_ASSERT(netpoint);
-        execNewChildCmd(cmd); // can throw
-        return netpoint;
-    } else {
-        throw RuntimeError(__FILE__, __LINE__, tr("Sorry, not yet implemented..."));
-    }
+    //QList<BI_FootprintPad*> padsUnderCursor = mBoard.getPadsAtScenePos(mPosition, &mLayer, nullptr);
+    //
+    //if (padsUnderCursor.count() == 0) {
+    //    return createNewNetPointInLine();
+    //} else if (padsUnderCursor.count() == 1) {
+    //    BI_FootprintPad* pad = padsUnderCursor.first();
+    //    NetSignal* netsignal = pad->getCompSigInstNetSignal();
+    //    if (!netsignal) {
+    //        throw RuntimeError(__FILE__, __LINE__, tr("The pin is not connected to any net."));
+    //    }
+    //    BI_NetSegment& netsegment = createNewNetSegment(*netsignal);
+    //    CmdBoardNetSegmentAddElements* cmd = new CmdBoardNetSegmentAddElements(netsegment);
+    //    BI_NetPoint* netpoint = cmd->addNetPoint(mLayer, *pad); Q_ASSERT(netpoint);
+    //    execNewChildCmd(cmd); // can throw
+    //    return netpoint;
+    //} else {
+    //    throw RuntimeError(__FILE__, __LINE__, tr("Sorry, not yet implemented..."));
+    //}
 }
 
 BI_NetPoint* CmdPlaceBoardNetPoint::createNewNetPointInLine()
 {
-    QList<BI_NetLine*> linesUnderCursor = mBoard.getNetLinesAtScenePos(mPosition, &mLayer, nullptr);
-
-    if (linesUnderCursor.count() == 0) {
-        throw RuntimeError(__FILE__, __LINE__, tr("No trace, via or pad at cursor position."));
-    } else if (linesUnderCursor.count() == 1) {
-        BI_NetLine& netline = *linesUnderCursor.first();
-        BI_NetSegment& netsegment = netline.getNetSegment();
-        QScopedPointer<CmdBoardNetSegmentAddElements> cmdAdd(
-            new CmdBoardNetSegmentAddElements(netsegment));
-        BI_NetPoint* netpoint = cmdAdd->addNetPoint(mLayer, mPosition); Q_ASSERT(netpoint);
-        cmdAdd->addNetLine(*netpoint, netline.getStartPoint(), netline.getWidth());
-        cmdAdd->addNetLine(*netpoint, netline.getEndPoint(), netline.getWidth());
-        execNewChildCmd(cmdAdd.take()); // can throw
-        QScopedPointer<CmdBoardNetSegmentRemoveElements> cmdRemove(
-            new CmdBoardNetSegmentRemoveElements(netsegment));
-        cmdRemove->removeNetLine(netline);
-        execNewChildCmd(cmdRemove.take()); // can throw
-        return netpoint;
-    } else {
-        throw RuntimeError(__FILE__, __LINE__, tr("Sorry, not yet implemented..."));
-    }
+    //QList<BI_NetLine*> linesUnderCursor = mBoard.getNetLinesAtScenePos(mPosition, &mLayer, nullptr);
+    //
+    //if (linesUnderCursor.count() == 0) {
+    //    throw RuntimeError(__FILE__, __LINE__, tr("No trace, via or pad at cursor position."));
+    //} else if (linesUnderCursor.count() == 1) {
+    //    BI_NetLine& netline = *linesUnderCursor.first();
+    //    BI_NetSegment& netsegment = netline.getNetSegment();
+    //    QScopedPointer<CmdBoardNetSegmentAddElements> cmdAdd(
+    //        new CmdBoardNetSegmentAddElements(netsegment));
+    //    BI_NetPoint* netpoint = cmdAdd->addNetPoint(mLayer, mPosition); Q_ASSERT(netpoint);
+    //    cmdAdd->addNetLine(*netpoint, netline.getStartPoint(), netline.getWidth());
+    //    cmdAdd->addNetLine(*netpoint, netline.getEndPoint(), netline.getWidth());
+    //    execNewChildCmd(cmdAdd.take()); // can throw
+    //    QScopedPointer<CmdBoardNetSegmentRemoveElements> cmdRemove(
+    //        new CmdBoardNetSegmentRemoveElements(netsegment));
+    //    cmdRemove->removeNetLine(netline);
+    //    execNewChildCmd(cmdRemove.take()); // can throw
+    //    return netpoint;
+    //} else {
+    //    throw RuntimeError(__FILE__, __LINE__, tr("Sorry, not yet implemented..."));
+    //}
 }
 
 /*****************************************************************************************

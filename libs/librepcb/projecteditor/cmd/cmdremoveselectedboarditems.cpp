@@ -192,28 +192,28 @@ void CmdRemoveSelectedBoardItems::createNewSubNetSegment(BI_NetSegment& netsegme
     }
 
     // copy netpoints
-    QHash<const BI_NetPoint*, BI_NetPoint*> netPointMap;
-    foreach (const BI_NetPoint* netpoint, items.netpoints) {
-        BI_NetPoint* newNetPoint;
-        if (netpoint->isAttachedToPad()) {
-            BI_FootprintPad* pad = netpoint->getFootprintPad(); Q_ASSERT(pad);
-            newNetPoint = cmdAddElements->addNetPoint(netpoint->getLayer(), *pad);
-        } else if (BI_Via* via = viaMap.value(netpoint->getVia())) {
-            newNetPoint = cmdAddElements->addNetPoint(netpoint->getLayer(), *via);
-        } else {
-            newNetPoint = cmdAddElements->addNetPoint(netpoint->getLayer(), netpoint->getPosition());
-        }
-        Q_ASSERT(newNetPoint);
-        netPointMap.insert(netpoint, newNetPoint);
-    }
-
-    // copy netlines
-    foreach (const BI_NetLine* netline, items.netlines) {
-        BI_NetPoint* p1 = netPointMap.value(&netline->getStartPoint()); Q_ASSERT(p1);
-        BI_NetPoint* p2 = netPointMap.value(&netline->getEndPoint()); Q_ASSERT(p2);
-        BI_NetLine* newNetLine = cmdAddElements->addNetLine(*p1, *p2, netline->getWidth());
-        Q_ASSERT(newNetLine);
-    }
+    //QHash<const BI_NetPoint*, BI_NetPoint*> netPointMap;
+    //foreach (const BI_NetPoint* netpoint, items.netpoints) {
+    //    BI_NetPoint* newNetPoint;
+    //    if (netpoint->isAttachedToPad()) {
+    //        BI_FootprintPad* pad = netpoint->getFootprintPad(); Q_ASSERT(pad);
+    //        newNetPoint = cmdAddElements->addNetPoint(netpoint->getLayer(), *pad);
+    //    } else if (BI_Via* via = viaMap.value(netpoint->getVia())) {
+    //        newNetPoint = cmdAddElements->addNetPoint(netpoint->getLayer(), *via);
+    //    } else {
+    //        newNetPoint = cmdAddElements->addNetPoint(netpoint->getLayer(), netpoint->getPosition());
+    //    }
+    //    Q_ASSERT(newNetPoint);
+    //    netPointMap.insert(netpoint, newNetPoint);
+    //}
+    //
+    //// copy netlines
+    //foreach (const BI_NetLine* netline, items.netlines) {
+    //    BI_NetPoint* p1 = netPointMap.value(&netline->getStartPoint()); Q_ASSERT(p1);
+    //    BI_NetPoint* p2 = netPointMap.value(&netline->getEndPoint()); Q_ASSERT(p2);
+    //    BI_NetLine* newNetLine = cmdAddElements->addNetLine(*p1, *p2, netline->getWidth());
+    //    Q_ASSERT(newNetLine);
+    //}
 
     execNewChildCmd(cmdAddElements); // can throw
 }
@@ -263,12 +263,12 @@ void CmdRemoveSelectedBoardItems::findAllConnectedNetPointsAndNetLines(
         BI_Via* via = netpoint.getVia(); Q_ASSERT(via);
         if ((availableVias.contains(via)) && (!vias.contains(via))) {
             vias.insert(via);
-            foreach (BI_NetPoint* np, via->getNetPoints()) {
-                if ((availableNetPoints.contains(np)) && (!netpoints.contains(np))) {
-                    findAllConnectedNetPointsAndNetLines(*np, availableVias,
-                        availableNetPoints, availableNetLines, vias, netpoints, netlines);
-                }
-            }
+            //foreach (BI_NetPoint* np, via->getNetPoints()) {
+            //    if ((availableNetPoints.contains(np)) && (!netpoints.contains(np))) {
+            //        findAllConnectedNetPointsAndNetLines(*np, availableVias,
+            //            availableNetPoints, availableNetLines, vias, netpoints, netlines);
+            //    }
+            //}
         }
     }
     foreach (BI_NetLine* line, netpoint.getLines()) {

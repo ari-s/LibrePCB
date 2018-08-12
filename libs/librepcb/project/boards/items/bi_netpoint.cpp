@@ -52,13 +52,10 @@ namespace project {
 BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, const BI_NetPoint& other,
                          BI_FootprintPad* pad, BI_Via* via) :
     BI_Base(segment.getBoard()), mNetSegment(segment), mUuid(Uuid::createRandom()),
-    mPosition(other.mPosition), mLayer(nullptr), mFootprintPad(pad), mVia(via)
+    mPosition(other.mPosition), mFootprintPad(pad), mVia(via)
 {
-    mLayer = mBoard.getLayerStack().getLayer(other.getLayer().getName());
-
     if (((other.getFootprintPad() == nullptr) != (mFootprintPad == nullptr))
-        || ((other.getVia() == nullptr) != (mVia == nullptr)) || (!mLayer))
-    {
+        || ((other.getVia() == nullptr) != (mVia == nullptr))) {
         throw LogicError(__FILE__, __LINE__);
     }
 
@@ -68,19 +65,9 @@ BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, const BI_NetPoint& other,
 BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, const SExpression& node) :
     BI_Base(segment.getBoard()), mNetSegment(segment),
     mUuid(node.getChildByIndex(0).getValue<Uuid>()),
-    mLayer(nullptr),
     mFootprintPad(nullptr),
     mVia(nullptr)
 {
-    // read attributes
-    QString layerName = node.getValueByPath<QString>("layer");
-    mLayer = mBoard.getLayerStack().getLayer(layerName);
-    if (!mLayer) {
-        throw RuntimeError(__FILE__, __LINE__,
-            QString(tr("Invalid board layer: \"%1\""))
-            .arg(layerName));
-    }
-
     const SExpression* viaNode = node.tryGetChildByPath("via");
     const SExpression* devNode = node.tryGetChildByPath("dev");
     const SExpression* padNode = node.tryGetChildByPath("pad");
@@ -117,43 +104,29 @@ BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, const SExpression& node) :
     init();
 }
 
-BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, GraphicsLayer& layer, const Point& position) :
+BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, const Point& position) :
     BI_Base(segment.getBoard()), mNetSegment(segment), mUuid(Uuid::createRandom()),
-    mPosition(position), mLayer(&layer), mFootprintPad(nullptr), mVia(nullptr)
+    mPosition(position), mFootprintPad(nullptr), mVia(nullptr)
 {
     init();
 }
 
-BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, GraphicsLayer& layer, BI_FootprintPad& pad) :
+BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, BI_FootprintPad& pad) :
     BI_Base(segment.getBoard()), mNetSegment(segment), mUuid(Uuid::createRandom()),
-    mPosition(pad.getPosition()), mLayer(&layer), mFootprintPad(&pad), mVia(nullptr)
+    mPosition(pad.getPosition()), mFootprintPad(&pad), mVia(nullptr)
 {
     init();
 }
 
-BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, GraphicsLayer& layer, BI_Via& via) :
+BI_NetPoint::BI_NetPoint(BI_NetSegment& segment, BI_Via& via) :
     BI_Base(segment.getBoard()), mNetSegment(segment), mUuid(Uuid::createRandom()),
-    mPosition(via.getPosition()), mLayer(&layer), mFootprintPad(nullptr), mVia(&via)
+    mPosition(via.getPosition()), mFootprintPad(nullptr), mVia(&via)
 {
     init();
 }
 
 void BI_NetPoint::init()
 {
-    // check layer
-    if (!mLayer->isCopperLayer()) {
-        throw RuntimeError(__FILE__, __LINE__,
-            QString(tr("The layer of netpoint \"%1\" is invalid (%2)."))
-            .arg(mUuid.toStr()).arg(mLayer->getName()));
-    }
-    if (mFootprintPad) {
-        if (!mFootprintPad->isOnLayer(mLayer->getName())) {
-            throw RuntimeError(__FILE__, __LINE__,
-                QString(tr("The layer of netpoint \"%1\" is invalid (%2)."))
-                .arg(mUuid.toStr()).arg(mLayer->getName()));
-        }
-    }
-
     // create the graphics item
     mGraphicsItem.reset(new BGI_NetPoint(*this));
     mGraphicsItem->setPos(mPosition.toPxQPointF());
@@ -181,6 +154,15 @@ NetSignal& BI_NetPoint::getNetSignalOfNetSegment() const noexcept
     return mNetSegment.getNetSignal();
 }
 
+QSet<const GraphicsLayer*> BI_NetPoint::getAllLayers() const noexcept
+{
+    QSet<const GraphicsLayer*> layers;
+    foreach (const BI_NetLine* netline, mRegisteredLines) {
+        layers.insert(&netline->getLayer());
+    }
+    return layers;
+}
+
 UnsignedLength BI_NetPoint::getMaxLineWidth() const noexcept
 {
     UnsignedLength w(0);
@@ -195,16 +177,6 @@ UnsignedLength BI_NetPoint::getMaxLineWidth() const noexcept
 /*****************************************************************************************
  *  Setters
  ****************************************************************************************/
-
-void BI_NetPoint::setLayer(GraphicsLayer& layer)
-{
-    if (&layer != mLayer) {
-        if (isUsed() || isAttached() || (!layer.isCopperLayer())) {
-            throw LogicError(__FILE__, __LINE__);
-        }
-        mLayer = &layer;
-    }
-}
 
 void BI_NetPoint::setPadToAttach(BI_FootprintPad* pad)
 {
@@ -368,7 +340,6 @@ void BI_NetPoint::serialize(SExpression& root) const
     if (!checkAttributesValidity()) throw LogicError(__FILE__, __LINE__);
 
     root.appendChild(mUuid);
-    root.appendChild("layer", SExpression::createToken(mLayer->getName()), false);
     if (isAttachedToPad()) {
         root.appendChild("dev", mFootprintPad->getFootprint().getComponentInstanceUuid(), true);
         root.appendChild("pad", mFootprintPad->getLibPadUuid(), false);

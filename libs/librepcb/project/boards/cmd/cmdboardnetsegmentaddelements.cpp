@@ -70,23 +70,21 @@ BI_NetPoint* CmdBoardNetSegmentAddElements::addNetPoint(BI_NetPoint& netpoint)
     return &netpoint;
 }
 
-BI_NetPoint* CmdBoardNetSegmentAddElements::addNetPoint(GraphicsLayer& layer,
-                                                        const Point& position)
+BI_NetPoint* CmdBoardNetSegmentAddElements::addNetPoint(const Point& position)
 {
-    BI_NetPoint* netpoint = new BI_NetPoint(mNetSegment, layer, position); // can throw
+    BI_NetPoint* netpoint = new BI_NetPoint(mNetSegment, position); // can throw
     return addNetPoint(*netpoint);
 }
 
-BI_NetPoint* CmdBoardNetSegmentAddElements::addNetPoint(GraphicsLayer& layer,
-                                                        BI_FootprintPad& pad)
+BI_NetPoint* CmdBoardNetSegmentAddElements::addNetPoint(BI_FootprintPad& pad)
 {
-    BI_NetPoint* netpoint = new BI_NetPoint(mNetSegment, layer, pad); // can throw
+    BI_NetPoint* netpoint = new BI_NetPoint(mNetSegment, pad); // can throw
     return addNetPoint(*netpoint);
 }
 
-BI_NetPoint* CmdBoardNetSegmentAddElements::addNetPoint(GraphicsLayer& layer, BI_Via& via)
+BI_NetPoint* CmdBoardNetSegmentAddElements::addNetPoint(BI_Via& via)
 {
-    BI_NetPoint* netpoint = new BI_NetPoint(mNetSegment, layer, via); // can throw
+    BI_NetPoint* netpoint = new BI_NetPoint(mNetSegment, via); // can throw
     return addNetPoint(*netpoint);
 }
 
@@ -98,9 +96,10 @@ BI_NetLine* CmdBoardNetSegmentAddElements::addNetLine(BI_NetLine& netline)
 
 BI_NetLine* CmdBoardNetSegmentAddElements::addNetLine(BI_NetPoint& startPoint,
                                                       BI_NetPoint& endPoint,
+                                                      GraphicsLayer& layer,
                                                       const PositiveLength& width)
 {
-    BI_NetLine* netline = new BI_NetLine(startPoint, endPoint, width); // can throw
+    BI_NetLine* netline = new BI_NetLine(startPoint, endPoint, layer, width); // can throw
     return addNetLine(*netline);
 }
 

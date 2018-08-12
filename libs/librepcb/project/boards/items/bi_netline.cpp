@@ -23,6 +23,7 @@
 #include <QtCore>
 #include "bi_netline.h"
 #include "../board.h"
+#include "../boardlayerstack.h"
 #include "bi_netpoint.h"
 #include "bi_netsegment.h"
 #include "../../project.h"
@@ -44,20 +45,25 @@ namespace project {
 
 BI_NetLine::BI_NetLine(const BI_NetLine& other, BI_NetPoint& startPoint, BI_NetPoint& endPoint) :
     BI_Base(startPoint.getBoard()), mPosition(other.mPosition), mUuid(Uuid::createRandom()),
-    mStartPoint(&startPoint), mEndPoint(&endPoint), mWidth(other.mWidth)
+    mStartPoint(&startPoint), mEndPoint(&endPoint), mLayer(other.mLayer), mWidth(other.mWidth)
 {
     init();
 }
 
-BI_NetLine::BI_NetLine(BI_NetSegment& segment, const SExpression& node) :
+BI_NetLine::BI_NetLine(BI_NetSegment& segment, const SExpression& node,
+                       const QHash<BI_NetPoint*, QString>& netpointLayerMap,
+                       const QHash<Uuid, Uuid>& netPointReplacements) :
     BI_Base(segment.getBoard()),
     mPosition(),
     mUuid(node.getChildByIndex(0).getValue<Uuid>()),
     mStartPoint(nullptr),
     mEndPoint(nullptr),
+    mLayer(nullptr),
     mWidth(node.getValueByPath<PositiveLength>("width"))
 {
     Uuid spUuid = node.getValueByPath<Uuid>("p1");
+    auto it = netPointReplacements.find(spUuid);
+    if (it != netPointReplacements.end()) spUuid = *it;
     mStartPoint = segment.getNetPointByUuid(spUuid);
     if(!mStartPoint) {
         throw RuntimeError(__FILE__, __LINE__,
@@ -66,6 +72,8 @@ BI_NetLine::BI_NetLine(BI_NetSegment& segment, const SExpression& node) :
     }
 
     Uuid epUuid = node.getValueByPath<Uuid>("p2");
+    it = netPointReplacements.find(epUuid);
+    if (it != netPointReplacements.end()) epUuid = *it;
     mEndPoint = segment.getNetPointByUuid(epUuid);
     if(!mEndPoint) {
         throw RuntimeError(__FILE__, __LINE__,
@@ -73,12 +81,24 @@ BI_NetLine::BI_NetLine(BI_NetSegment& segment, const SExpression& node) :
             .arg(epUuid.toStr()));
     }
 
+    QString layerName = netpointLayerMap.value(mStartPoint); // backward compatibility, remove this some time!
+    if (const SExpression* layerNode = node.tryGetChildByPath("layer")) {
+        layerName = layerNode->getValueOfFirstChild<QString>();
+    }
+    mLayer = mBoard.getLayerStack().getLayer(layerName);
+    if (!mLayer) {
+        throw RuntimeError(__FILE__, __LINE__,
+            QString(tr("Invalid board layer: \"%1\""))
+            .arg(layerName));
+    }
+
     init();
 }
 
-BI_NetLine::BI_NetLine(BI_NetPoint& startPoint, BI_NetPoint& endPoint, const PositiveLength& width) :
+BI_NetLine::BI_NetLine(BI_NetPoint& startPoint, BI_NetPoint& endPoint,
+                       GraphicsLayer& layer, const PositiveLength& width) :
     BI_Base(startPoint.getBoard()), mPosition(), mUuid(Uuid::createRandom()),
-    mStartPoint(&startPoint), mEndPoint(&endPoint), mWidth(width)
+    mStartPoint(&startPoint), mEndPoint(&endPoint), mLayer(&layer), mWidth(width)
 {
     init();
 }
@@ -91,10 +111,11 @@ void BI_NetLine::init()
             tr("BI_NetLine: endpoints netsegment mismatch."));
     }
 
-    // check if both netpoints have the same layer
-    if (&mStartPoint->getLayer() != &mEndPoint->getLayer()) {
-        throw LogicError(__FILE__, __LINE__,
-            tr("BI_NetLine: endpoints layer mismatch."));
+    // check layer
+    if (!mLayer->isCopperLayer()) {
+        throw RuntimeError(__FILE__, __LINE__,
+            QString(tr("The layer of netpoint \"%1\" is invalid (%2)."))
+            .arg(mUuid.toStr()).arg(mLayer->getName()));
     }
 
     // check if both netpoints are different
@@ -123,12 +144,6 @@ BI_NetSegment& BI_NetLine::getNetSegment() const noexcept
     Q_ASSERT(mStartPoint && mEndPoint);
     Q_ASSERT(&mStartPoint->getNetSegment() == &mEndPoint->getNetSegment());
     return mStartPoint->getNetSegment();
-}
-
-GraphicsLayer& BI_NetLine::getLayer() const noexcept
-{
-    Q_ASSERT(&mStartPoint->getLayer() == &mEndPoint->getLayer());
-    return mStartPoint->getLayer();
 }
 
 BI_NetPoint* BI_NetLine::getOtherPoint(const BI_NetPoint& firstPoint) const noexcept
@@ -177,6 +192,16 @@ Path BI_NetLine::getSceneOutline(const Length& expansion) const noexcept
  *  Setters
  ****************************************************************************************/
 
+//void BI_NetLine::setLayer(GraphicsLayer& layer)
+//{
+//    if (&layer != mLayer) {
+//        if (isUsed() || isAttached() || (!layer.isCopperLayer())) {
+//            throw LogicError(__FILE__, __LINE__);
+//        }
+//        mLayer = &layer;
+//    }
+//}
+
 void BI_NetLine::setWidth(const PositiveLength& width) noexcept
 {
     if (width != mWidth) {
@@ -193,7 +218,7 @@ void BI_NetLine::addToBoard()
 {
     if (isAddedToBoard()
         || (&mStartPoint->getNetSegment() != &mEndPoint->getNetSegment())
-        || (&mStartPoint->getLayer() != &mEndPoint->getLayer()))
+        /*|| (&mStartPoint->getLayer() != &mEndPoint->getLayer())*/)
     {
         throw LogicError(__FILE__, __LINE__);
     }
@@ -213,7 +238,7 @@ void BI_NetLine::removeFromBoard()
 {
     if ((!isAddedToBoard())
         || (&mStartPoint->getNetSegment() != &mEndPoint->getNetSegment())
-        || (&mStartPoint->getLayer() != &mEndPoint->getLayer()))
+        /*|| (&mStartPoint->getLayer() != &mEndPoint->getLayer())*/)
     {
         throw LogicError(__FILE__, __LINE__);
     }
@@ -238,6 +263,7 @@ void BI_NetLine::serialize(SExpression& root) const
     if (!checkAttributesValidity()) throw LogicError(__FILE__, __LINE__);
 
     root.appendChild(mUuid);
+    root.appendChild("layer", SExpression::createToken(mLayer->getName()), false);
     root.appendChild("width", mWidth, false);
     root.appendChild("p1", mStartPoint->getUuid(), true);
     root.appendChild("p2", mEndPoint->getUuid(), true);

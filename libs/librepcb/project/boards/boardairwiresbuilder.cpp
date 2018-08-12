@@ -202,7 +202,7 @@ QVector<QPair<Point, Point> > BoardAirWiresBuilder::buildAirWires() const
             Point pos = netpoint->getPosition();
             points.emplace_back(pos.getX().toNm(), pos.getY().toNm(), id);
             netPointMap[netpoint] = id;
-            layerMap[id] = netpoint->getLayer().getName();
+            //layerMap[id] = netpoint->getLayer().getName();
             if (const BI_Via* via = netpoint->getVia()) {
                 Q_ASSERT(viaMap.contains(via));
                 edges.emplace_back(points[id], points[viaMap[via]], -1);

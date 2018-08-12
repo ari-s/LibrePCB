@@ -39,7 +39,6 @@ namespace project {
 
 CmdBoardNetPointEdit::CmdBoardNetPointEdit(BI_NetPoint& point) noexcept :
     UndoCommand(tr("Edit netpoint")), mNetPoint(point),
-    mOldLayer(&point.getLayer()), mNewLayer(mOldLayer),
     mOldFootprintPad(point.getFootprintPad()), mNewFootprintPad(mOldFootprintPad),
     mOldVia(point.getVia()), mNewVia(mOldVia),
     mOldPos(point.getPosition()), mNewPos(mOldPos)
@@ -56,12 +55,6 @@ CmdBoardNetPointEdit::~CmdBoardNetPointEdit() noexcept
 /*****************************************************************************************
  *  Setters
  ****************************************************************************************/
-
-void CmdBoardNetPointEdit::setLayer(GraphicsLayer& layer) noexcept
-{
-    Q_ASSERT(!wasEverExecuted());
-    mNewLayer = &layer;
-}
 
 void CmdBoardNetPointEdit::setPadToAttach(BI_FootprintPad* pad) noexcept
 {
@@ -105,8 +98,6 @@ bool CmdBoardNetPointEdit::performExecute()
 void CmdBoardNetPointEdit::performUndo()
 {
     ScopeGuardList sgl;
-    mNetPoint.setLayer(*mOldLayer); // can throw
-    sgl.add([&](){mNetPoint.setLayer(*mNewLayer);});
     mNetPoint.setPadToAttach(mOldFootprintPad); // can throw
     sgl.add([&](){mNetPoint.setPadToAttach(mNewFootprintPad);});
     mNetPoint.setViaToAttach(mOldVia); // can throw
@@ -118,8 +109,6 @@ void CmdBoardNetPointEdit::performUndo()
 void CmdBoardNetPointEdit::performRedo()
 {
     ScopeGuardList sgl;
-    mNetPoint.setLayer(*mNewLayer); // can throw
-    sgl.add([&](){mNetPoint.setLayer(*mOldLayer);});
     mNetPoint.setPadToAttach(mNewFootprintPad); // can throw
     sgl.add([&](){mNetPoint.setPadToAttach(mOldFootprintPad);});
     mNetPoint.setViaToAttach(mNewVia); // can throw

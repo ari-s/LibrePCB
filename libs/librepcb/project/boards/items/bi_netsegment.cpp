@@ -106,6 +106,10 @@ BI_NetSegment::BI_NetSegment(Board& board, const SExpression& node) :
         }
 
         // Load all netpoints
+        QHash<BI_NetPoint*, QString> netpointLayerMapping; // backward compatibility, remove this some time!
+        QHash<BI_Via*, BI_NetPoint*> netPointsOfVias; // backward compatibility, remove this some time!
+        QHash<BI_FootprintPad*, BI_NetPoint*> netPointsOfPads; // backward compatibility, remove this some time!
+        QHash<Uuid, Uuid> netPointReplacements; // backward compatibility, remove this some time!
         foreach (const SExpression& node, node.getChildren("netpoint")) {
             BI_NetPoint* netpoint = new BI_NetPoint(*this, node);
             if (getNetPointByUuid(netpoint->getUuid())) {
@@ -113,12 +117,30 @@ BI_NetSegment::BI_NetSegment(Board& board, const SExpression& node) :
                     QString(tr("There is already a netpoint with the UUID \"%1\"!"))
                     .arg(netpoint->getUuid().toStr()));
             }
-            mNetPoints.append(netpoint);
+            if (const SExpression* layerNode = node.tryGetChildByPath("layer")) {
+                netpointLayerMapping.insert(netpoint, layerNode->getValueOfFirstChild<QString>());
+            }
+            if (netpoint->isAttachedToVia() && netPointsOfVias.contains(netpoint->getVia())) {
+                netPointReplacements.insert(netpoint->getUuid(), netPointsOfVias.value(netpoint->getVia())->getUuid());
+                delete netpoint;
+            } else if (netpoint->isAttachedToPad() && netPointsOfPads.contains(netpoint->getFootprintPad())) {
+                netPointReplacements.insert(netpoint->getUuid(), netPointsOfPads.value(netpoint->getFootprintPad())->getUuid());
+                delete netpoint;
+            } else {
+                if (netpoint->isAttachedToVia() && !netPointsOfVias.contains(netpoint->getVia())) {
+                    netPointsOfVias.insert(netpoint->getVia(), netpoint);
+                }
+                if (netpoint->isAttachedToPad() && !netPointsOfPads.contains(netpoint->getFootprintPad())) {
+                    netPointsOfPads.insert(netpoint->getFootprintPad(), netpoint);
+                }
+                mNetPoints.append(netpoint);
+            }
+
         }
 
         // Load all netlines
         foreach (const SExpression& node, node.getChildren("netline")) {
-            BI_NetLine* netline = new BI_NetLine(*this, node);
+            BI_NetLine* netline = new BI_NetLine(*this, node, netpointLayerMapping, netPointReplacements);
             if (getNetLineByUuid(netline->getUuid())) {
                 throw RuntimeError(__FILE__, __LINE__,
                     QString(tr("There is already a netline with the UUID \"%1\"!"))
@@ -187,7 +209,7 @@ int BI_NetSegment::getNetPointsAtScenePos(const Point& pos, const GraphicsLayer*
     foreach (BI_NetPoint* netpoint, mNetPoints) {
         if (netpoint->isSelectable()
             && netpoint->getGrabAreaScenePx().contains(pos.toPxQPointF())
-            && ((!layer) || (&netpoint->getLayer() == layer)))
+            && ((!layer) || (netpoint->getAllLayers().contains(layer))))
         {
             points.append(netpoint);
             ++count;

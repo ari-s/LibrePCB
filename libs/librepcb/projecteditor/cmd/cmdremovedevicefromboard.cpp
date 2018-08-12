@@ -61,11 +61,11 @@ bool CmdRemoveDeviceFromBoard::performExecute()
     auto undoScopeGuard = scopeGuard([&](){performUndo();});
 
     // detach all used netpoints && remove all unused netpoints + netlines
-    foreach (BI_FootprintPad* pad, mDevice.getFootprint().getPads()) { Q_ASSERT(pad);
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) { Q_ASSERT(netpoint);
-            execNewChildCmd(new CmdDetachBoardNetPointFromViaOrPad(*netpoint)); // can throw
-        }
-    }
+    //foreach (BI_FootprintPad* pad, mDevice.getFootprint().getPads()) { Q_ASSERT(pad);
+    //    foreach (BI_NetPoint* netpoint, pad->getNetPoints()) { Q_ASSERT(netpoint);
+    //        execNewChildCmd(new CmdDetachBoardNetPointFromViaOrPad(*netpoint)); // can throw
+    //    }
+    //}
 
     // remove the device itself
     execNewChildCmd(new CmdDeviceInstanceRemove(mDevice.getBoard(), mDevice)); // can throw

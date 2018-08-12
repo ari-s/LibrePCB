@@ -114,11 +114,11 @@ void CmdChangeNetSignalOfSchematicNetSegment::changeNetSignalOfNetSegment()
 void CmdChangeNetSignalOfSchematicNetSegment::updateCompSigInstNetSignal(ComponentSignalInstance& cmpSig)
 {
     // disconnect traces from pads in all boards
-    foreach (BI_FootprintPad* pad, cmpSig.getRegisteredFootprintPads()) { Q_ASSERT(pad);
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) { Q_ASSERT(netpoint);
-            appendChild(new CmdDetachBoardNetPointFromViaOrPad(*netpoint));
-        }
-    }
+    //foreach (BI_FootprintPad* pad, cmpSig.getRegisteredFootprintPads()) { Q_ASSERT(pad);
+    //    foreach (BI_NetPoint* netpoint, pad->getNetPoints()) { Q_ASSERT(netpoint);
+    //        appendChild(new CmdDetachBoardNetPointFromViaOrPad(*netpoint));
+    //    }
+    //}
 
     // change netsignal of component signal instance
     appendChild(new CmdCompSigInstSetNetSignal(cmpSig, &mNewNetSignal));

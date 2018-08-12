@@ -76,7 +76,7 @@ bool CmdCombineBoardNetPoints::performExecute()
         BI_NetPoint* otherPoint = line->getOtherPoint(mNetPointToBeRemoved); Q_ASSERT(otherPoint);
         cmdRemove->removeNetLine(*line);
         if (otherPoint != &mResultingNetPoint) {
-            cmdAdd->addNetLine(mResultingNetPoint, *otherPoint, line->getWidth());
+            //cmdAdd->addNetLine(mResultingNetPoint, *otherPoint, line->getWidth());
         }
     }
 

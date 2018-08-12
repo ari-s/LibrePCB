@@ -31,9 +31,6 @@
  *  Namespace / Forward Declarations
  ****************************************************************************************/
 namespace librepcb {
-
-class GraphicsLayer;
-
 namespace project {
 
 class BI_NetPoint;
@@ -57,7 +54,6 @@ class CmdBoardNetPointEdit final : public UndoCommand
         ~CmdBoardNetPointEdit() noexcept;
 
         // Setters
-        void setLayer(GraphicsLayer& layer) noexcept;
         void setPadToAttach(BI_FootprintPad* pad) noexcept;
         void setViaToAttach(BI_Via* via) noexcept;
         void setPosition(const Point& pos, bool immediate) noexcept;
@@ -84,8 +80,6 @@ class CmdBoardNetPointEdit final : public UndoCommand
         BI_NetPoint& mNetPoint;
 
         // General Attributes
-        GraphicsLayer* mOldLayer;
-        GraphicsLayer* mNewLayer;
         BI_FootprintPad* mOldFootprintPad;
         BI_FootprintPad* mNewFootprintPad;
         BI_Via* mOldVia;

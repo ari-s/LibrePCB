@@ -73,118 +73,118 @@ bool CmdCombineAllItemsUnderBoardNetPoint::performExecute()
     auto undoScopeGuard = scopeGuard([&](){performUndo();});
 
     // get all vias, netpoints, netlines and footprint pads under the netpoint
-    QList<BI_NetPoint*> netpointsUnderCursor = mBoard.getNetPointsAtScenePos(
-        mNetPoint.getPosition(), &mNetPoint.getLayer(), &mNetPoint.getNetSignalOfNetSegment());
-    QList<BI_NetLine*> netlinesUnderCursor = mBoard.getNetLinesAtScenePos(
-        mNetPoint.getPosition(), &mNetPoint.getLayer(), &mNetPoint.getNetSignalOfNetSegment());
-    QList<BI_FootprintPad*> padsUnderCursor = mBoard.getPadsAtScenePos(
-        mNetPoint.getPosition(), &mNetPoint.getLayer(), &mNetPoint.getNetSignalOfNetSegment());
-    QList<BI_Via*> viasUnderCursor = mBoard.getViasAtScenePos(
-        mNetPoint.getPosition(), &mNetPoint.getNetSignalOfNetSegment());
-
-    // get all other netsegments/netsignals of the items under the netpoint
-    QSet<BI_NetSegment*> netSegmentsUnderCursor;
-    QSet<NetSignal*> netSignalsUnderCursor;
-    foreach (BI_NetPoint* netpoint, netpointsUnderCursor) {
-        netSegmentsUnderCursor.insert(&netpoint->getNetSegment());
-        netSignalsUnderCursor.insert(&netpoint->getNetSignalOfNetSegment());
-    }
-    foreach (BI_NetLine* netline, netlinesUnderCursor) {
-        netSegmentsUnderCursor.insert(&netline->getNetSegment());
-        netSignalsUnderCursor.insert(&netline->getNetSignalOfNetSegment());
-    }
-    foreach (BI_FootprintPad* pad, padsUnderCursor) {
-        NetSignal* signal = pad->getCompSigInstNetSignal();
-        if (signal) { netSignalsUnderCursor.insert(signal); }
-    }
-    foreach (BI_Via* via, viasUnderCursor) {
-        netSegmentsUnderCursor.insert(&via->getNetSegment());
-        netSignalsUnderCursor.insert(&via->getNetSignalOfNetSegment());
-    }
-
-    // abort if multiple netsignals
-    if (netSignalsUnderCursor.count() > 1) {
-        throw RuntimeError(__FILE__, __LINE__, tr("Cannot combine board elements because"
-            "there are different net signals under the cursor."));
-    }
-
-    // combine all netsegments together
-    BI_NetSegment& resultingNetSegment = mNetPoint.getNetSegment();
-    foreach (BI_NetSegment* netsegment, netSegmentsUnderCursor) { Q_ASSERT(netsegment);
-        if (netsegment != &resultingNetSegment) {
-            execNewChildCmd(new CmdCombineBoardNetSegments(*netsegment, mNetPoint)); // can throw
-            mHasCombinedSomeItems = true;
-        }
-    }
-
-    // combine netpoints & netlines of the same netsegment under the cursor
-    netpointsUnderCursor.clear();
-    resultingNetSegment.getNetPointsAtScenePos(mNetPoint.getPosition(),
-                                               &mNetPoint.getLayer(), netpointsUnderCursor);
-    netpointsUnderCursor.removeOne(&mNetPoint);
-    if (netpointsUnderCursor.count() > 0) {
-        foreach (BI_NetPoint* netpoint, netpointsUnderCursor) {
-            execNewChildCmd(new CmdCombineBoardNetPoints(*netpoint, mNetPoint)); // can throw
-            mHasCombinedSomeItems = true;
-        }
-    } else {
-        netlinesUnderCursor.clear();
-        resultingNetSegment.getNetLinesAtScenePos(mNetPoint.getPosition(),
-                                                  &mNetPoint.getLayer(), netlinesUnderCursor);
-        QList<BI_NetLine*> netlinesOfNetpoint = mNetPoint.getLines();
-        foreach (BI_NetLine* netline, netlinesUnderCursor) {
-            if (!netlinesOfNetpoint.contains(netline)) {
-                // TODO: do not create redundant netlines!
-                auto* cmdAdd = new CmdBoardNetSegmentAddElements(resultingNetSegment);
-                auto* cmdRemove = new CmdBoardNetSegmentRemoveElements(resultingNetSegment);
-                cmdRemove->removeNetLine(*netline);
-                cmdAdd->addNetLine(mNetPoint, netline->getStartPoint(), netline->getWidth());
-                cmdAdd->addNetLine(mNetPoint, netline->getEndPoint(), netline->getWidth());
-                execNewChildCmd(cmdAdd); // can throw
-                execNewChildCmd(cmdRemove); // can throw
-                mHasCombinedSomeItems = true;
-            }
-        }
-    }
-
-    // TODO: connect all pads under the cursor to the netpoint
-    if (padsUnderCursor.count() + viasUnderCursor.count() > 1) {
-        throw RuntimeError(__FILE__, __LINE__, tr("Sorry, not yet implemented..."));
-    } else if (padsUnderCursor.count() == 1) {
-        BI_FootprintPad* pad = padsUnderCursor.first();
-        if (mNetPoint.getFootprintPad() != pad) {
-            if (mNetPoint.getFootprintPad() == nullptr) {
-                // attach netpoint to pad
-                BI_NetSegment& netsegment = mNetPoint.getNetSegment();
-                execNewChildCmd(new CmdBoardNetSegmentRemove(netsegment)); // can throw
-                CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(mNetPoint);
-                cmd->setPadToAttach(pad);
-                execNewChildCmd(cmd); // can throw
-                execNewChildCmd(new CmdBoardNetSegmentAdd(netsegment)); // can throw
-                mHasCombinedSomeItems = true;
-            } else {
-                throw RuntimeError(__FILE__, __LINE__,
-                                   tr("Sorry, not yet implemented..."));
-            }
-        }
-    } else if (viasUnderCursor.count() == 1) {
-        BI_Via* via = viasUnderCursor.first();
-        if (mNetPoint.getVia() != via) {
-            if (mNetPoint.getVia() == nullptr) {
-                // attach netpoint to via
-                BI_NetSegment& netsegment = mNetPoint.getNetSegment();
-                execNewChildCmd(new CmdBoardNetSegmentRemove(netsegment)); // can throw
-                CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(mNetPoint);
-                cmd->setViaToAttach(via);
-                execNewChildCmd(cmd); // can throw
-                execNewChildCmd(new CmdBoardNetSegmentAdd(netsegment)); // can throw
-                mHasCombinedSomeItems = true;
-            } else {
-                throw RuntimeError(__FILE__, __LINE__,
-                                   tr("Sorry, not yet implemented..."));
-            }
-        }
-    }
+    //QList<BI_NetPoint*> netpointsUnderCursor = mBoard.getNetPointsAtScenePos(
+    //    mNetPoint.getPosition(), &mNetPoint.getLayer(), &mNetPoint.getNetSignalOfNetSegment());
+    //QList<BI_NetLine*> netlinesUnderCursor = mBoard.getNetLinesAtScenePos(
+    //    mNetPoint.getPosition(), &mNetPoint.getLayer(), &mNetPoint.getNetSignalOfNetSegment());
+    //QList<BI_FootprintPad*> padsUnderCursor = mBoard.getPadsAtScenePos(
+    //    mNetPoint.getPosition(), &mNetPoint.getLayer(), &mNetPoint.getNetSignalOfNetSegment());
+    //QList<BI_Via*> viasUnderCursor = mBoard.getViasAtScenePos(
+    //    mNetPoint.getPosition(), &mNetPoint.getNetSignalOfNetSegment());
+    //
+    //// get all other netsegments/netsignals of the items under the netpoint
+    //QSet<BI_NetSegment*> netSegmentsUnderCursor;
+    //QSet<NetSignal*> netSignalsUnderCursor;
+    //foreach (BI_NetPoint* netpoint, netpointsUnderCursor) {
+    //    netSegmentsUnderCursor.insert(&netpoint->getNetSegment());
+    //    netSignalsUnderCursor.insert(&netpoint->getNetSignalOfNetSegment());
+    //}
+    //foreach (BI_NetLine* netline, netlinesUnderCursor) {
+    //    netSegmentsUnderCursor.insert(&netline->getNetSegment());
+    //    netSignalsUnderCursor.insert(&netline->getNetSignalOfNetSegment());
+    //}
+    //foreach (BI_FootprintPad* pad, padsUnderCursor) {
+    //    NetSignal* signal = pad->getCompSigInstNetSignal();
+    //    if (signal) { netSignalsUnderCursor.insert(signal); }
+    //}
+    //foreach (BI_Via* via, viasUnderCursor) {
+    //    netSegmentsUnderCursor.insert(&via->getNetSegment());
+    //    netSignalsUnderCursor.insert(&via->getNetSignalOfNetSegment());
+    //}
+    //
+    //// abort if multiple netsignals
+    //if (netSignalsUnderCursor.count() > 1) {
+    //    throw RuntimeError(__FILE__, __LINE__, tr("Cannot combine board elements because"
+    //        "there are different net signals under the cursor."));
+    //}
+    //
+    //// combine all netsegments together
+    //BI_NetSegment& resultingNetSegment = mNetPoint.getNetSegment();
+    //foreach (BI_NetSegment* netsegment, netSegmentsUnderCursor) { Q_ASSERT(netsegment);
+    //    if (netsegment != &resultingNetSegment) {
+    //        execNewChildCmd(new CmdCombineBoardNetSegments(*netsegment, mNetPoint)); // can throw
+    //        mHasCombinedSomeItems = true;
+    //    }
+    //}
+    //
+    //// combine netpoints & netlines of the same netsegment under the cursor
+    //netpointsUnderCursor.clear();
+    //resultingNetSegment.getNetPointsAtScenePos(mNetPoint.getPosition(),
+    //                                           &mNetPoint.getLayer(), netpointsUnderCursor);
+    //netpointsUnderCursor.removeOne(&mNetPoint);
+    //if (netpointsUnderCursor.count() > 0) {
+    //    foreach (BI_NetPoint* netpoint, netpointsUnderCursor) {
+    //        execNewChildCmd(new CmdCombineBoardNetPoints(*netpoint, mNetPoint)); // can throw
+    //        mHasCombinedSomeItems = true;
+    //    }
+    //} else {
+    //    netlinesUnderCursor.clear();
+    //    resultingNetSegment.getNetLinesAtScenePos(mNetPoint.getPosition(),
+    //                                              &mNetPoint.getLayer(), netlinesUnderCursor);
+    //    QList<BI_NetLine*> netlinesOfNetpoint = mNetPoint.getLines();
+    //    foreach (BI_NetLine* netline, netlinesUnderCursor) {
+    //        if (!netlinesOfNetpoint.contains(netline)) {
+    //            // TODO: do not create redundant netlines!
+    //            auto* cmdAdd = new CmdBoardNetSegmentAddElements(resultingNetSegment);
+    //            auto* cmdRemove = new CmdBoardNetSegmentRemoveElements(resultingNetSegment);
+    //            cmdRemove->removeNetLine(*netline);
+    //            cmdAdd->addNetLine(mNetPoint, netline->getStartPoint(), netline->getWidth());
+    //            cmdAdd->addNetLine(mNetPoint, netline->getEndPoint(), netline->getWidth());
+    //            execNewChildCmd(cmdAdd); // can throw
+    //            execNewChildCmd(cmdRemove); // can throw
+    //            mHasCombinedSomeItems = true;
+    //        }
+    //    }
+    //}
+    //
+    //// TODO: connect all pads under the cursor to the netpoint
+    //if (padsUnderCursor.count() + viasUnderCursor.count() > 1) {
+    //    throw RuntimeError(__FILE__, __LINE__, tr("Sorry, not yet implemented..."));
+    //} else if (padsUnderCursor.count() == 1) {
+    //    BI_FootprintPad* pad = padsUnderCursor.first();
+    //    if (mNetPoint.getFootprintPad() != pad) {
+    //        if (mNetPoint.getFootprintPad() == nullptr) {
+    //            // attach netpoint to pad
+    //            BI_NetSegment& netsegment = mNetPoint.getNetSegment();
+    //            execNewChildCmd(new CmdBoardNetSegmentRemove(netsegment)); // can throw
+    //            CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(mNetPoint);
+    //            cmd->setPadToAttach(pad);
+    //            execNewChildCmd(cmd); // can throw
+    //            execNewChildCmd(new CmdBoardNetSegmentAdd(netsegment)); // can throw
+    //            mHasCombinedSomeItems = true;
+    //        } else {
+    //            throw RuntimeError(__FILE__, __LINE__,
+    //                               tr("Sorry, not yet implemented..."));
+    //        }
+    //    }
+    //} else if (viasUnderCursor.count() == 1) {
+    //    BI_Via* via = viasUnderCursor.first();
+    //    if (mNetPoint.getVia() != via) {
+    //        if (mNetPoint.getVia() == nullptr) {
+    //            // attach netpoint to via
+    //            BI_NetSegment& netsegment = mNetPoint.getNetSegment();
+    //            execNewChildCmd(new CmdBoardNetSegmentRemove(netsegment)); // can throw
+    //            CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(mNetPoint);
+    //            cmd->setViaToAttach(via);
+    //            execNewChildCmd(cmd); // can throw
+    //            execNewChildCmd(new CmdBoardNetSegmentAdd(netsegment)); // can throw
+    //            mHasCombinedSomeItems = true;
+    //        } else {
+    //            throw RuntimeError(__FILE__, __LINE__,
+    //                               tr("Sorry, not yet implemented..."));
+    //        }
+    //    }
+    //}
 
     undoScopeGuard.dismiss(); // no undo required
     return (getChildCount() > 0);

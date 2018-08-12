@@ -69,14 +69,13 @@ class BI_FootprintPad final : public BI_Base
         QString getDisplayText() const noexcept;
         const Angle& getRotation() const noexcept {return mRotation;}
         BI_Footprint& getFootprint() const noexcept {return mFootprint;}
-        const QMap<QString, BI_NetPoint*>& getNetPoints() const noexcept {return mRegisteredNetPoints;}
-        BI_NetPoint* getNetPointOfLayer(const QString& layerName) const noexcept {return mRegisteredNetPoints.value(layerName, nullptr);}
+        BI_NetPoint* getNetPoint() const noexcept {return mRegisteredNetPoint;}
         QString getLayerName() const noexcept;
         bool isOnLayer(const QString& layerName) const noexcept;
         const library::FootprintPad& getLibPad() const noexcept {return *mFootprintPad;}
         ComponentSignalInstance* getComponentSignalInstance() const noexcept {return mComponentSignalInstance;}
         NetSignal* getCompSigInstNetSignal() const noexcept;
-        bool isUsed() const noexcept {return (mRegisteredNetPoints.count() > 0);}
+        bool isUsed() const noexcept {return (mRegisteredNetPoint != nullptr);}
         bool isSelectable() const noexcept override;
         Path getOutline(const Length& expansion = Length(0)) const noexcept;
         Path getSceneOutline(const Length& expansion = Length(0)) const noexcept;
@@ -121,7 +120,7 @@ class BI_FootprintPad final : public BI_Base
         // Misc
         Point mPosition;
         Angle mRotation;
-        QMap<QString, BI_NetPoint*> mRegisteredNetPoints; ///< key: layer name
+        BI_NetPoint* mRegisteredNetPoint;
         QScopedPointer<BGI_FootprintPad> mGraphicsItem;
 };
 

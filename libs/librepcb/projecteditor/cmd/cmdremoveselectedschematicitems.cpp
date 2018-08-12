@@ -378,11 +378,11 @@ void CmdRemoveSelectedSchematicItems::disconnectComponentSignalInstance(
         ComponentSignalInstance& signal)
 {
     // disconnect board items
-    foreach (BI_FootprintPad* pad, signal.getRegisteredFootprintPads()) {
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
-            execNewChildCmd(new CmdDetachBoardNetPointFromViaOrPad(*netpoint));
-        }
-    }
+    //foreach (BI_FootprintPad* pad, signal.getRegisteredFootprintPads()) {
+    //    foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
+    //        execNewChildCmd(new CmdDetachBoardNetPointFromViaOrPad(*netpoint));
+    //    }
+    //}
 
     // disconnect the component signal instance from the net signal
     execNewChildCmd(new CmdCompSigInstSetNetSignal(signal, nullptr)); // can throw

@@ -45,7 +45,7 @@ namespace project {
 BI_Via::BI_Via(BI_NetSegment& netsegment, const BI_Via& other) :
     BI_Base(netsegment.getBoard()), mNetSegment(netsegment), mUuid(Uuid::createRandom()),
     mPosition(other.mPosition), mShape(other.mShape), mSize(other.mSize),
-    mDrillDiameter(other.mDrillDiameter)
+    mDrillDiameter(other.mDrillDiameter), mRegisteredNetPoint(nullptr)
 {
     init();
 }
@@ -57,7 +57,8 @@ BI_Via::BI_Via(BI_NetSegment& netsegment, const SExpression& node) :
     mPosition(node.getChildByPath("pos")),
     mShape(node.getValueByPath<Shape>("shape")),
     mSize(node.getValueByPath<PositiveLength>("size")),
-    mDrillDiameter(node.getValueByPath<PositiveLength>("drill"))
+    mDrillDiameter(node.getValueByPath<PositiveLength>("drill")),
+    mRegisteredNetPoint(nullptr)
 {
     init();
 }
@@ -65,7 +66,8 @@ BI_Via::BI_Via(BI_NetSegment& netsegment, const SExpression& node) :
 BI_Via::BI_Via(BI_NetSegment& netsegment, const Point& position, Shape shape, const PositiveLength& size,
                const PositiveLength& drillDiameter) :
     BI_Base(netsegment.getBoard()), mNetSegment(netsegment), mUuid(Uuid::createRandom()),
-    mPosition(position), mShape(shape), mSize(size), mDrillDiameter(drillDiameter)
+    mPosition(position), mShape(shape), mSize(size), mDrillDiameter(drillDiameter),
+    mRegisteredNetPoint(nullptr)
 {
     init();
 }
@@ -137,7 +139,7 @@ void BI_Via::setPosition(const Point& position) noexcept
     if (position != mPosition) {
         mPosition = position;
         mGraphicsItem->setPos(mPosition.toPxQPointF());
-        updateNetPoints();
+        if (mRegisteredNetPoint) mRegisteredNetPoint->setPosition(mPosition);
         mBoard.scheduleAirWiresRebuild(&getNetSignalOfNetSegment());
     }
 }
@@ -194,31 +196,23 @@ void BI_Via::removeFromBoard()
 
 void BI_Via::registerNetPoint(BI_NetPoint& netpoint)
 {
-    if ((!isAddedToBoard()) || (mRegisteredNetPoints.contains(netpoint.getLayer().getName()))
-        || (netpoint.getBoard() != mBoard) || (&netpoint.getNetSegment() != &mNetSegment))
-    {
+    if ((!isAddedToBoard()) || (mRegisteredNetPoint) || (netpoint.getBoard() != mBoard)
+            || (&netpoint.getNetSegment() != &mNetSegment)) {
         throw LogicError(__FILE__, __LINE__);
     }
-    mRegisteredNetPoints.insert(netpoint.getLayer().getName(), &netpoint);
+    mRegisteredNetPoint = &netpoint;
     netpoint.updateLines();
     mGraphicsItem->updateCacheAndRepaint();
 }
 
 void BI_Via::unregisterNetPoint(BI_NetPoint& netpoint)
 {
-    if ((!isAddedToBoard()) || (getNetPointOfLayer(netpoint.getLayer().getName()) != &netpoint)) {
+    if ((!isAddedToBoard()) || (mRegisteredNetPoint != &netpoint)) {
         throw LogicError(__FILE__, __LINE__);
     }
-    mRegisteredNetPoints.remove(netpoint.getLayer().getName());
+    mRegisteredNetPoint = nullptr;
     netpoint.updateLines();
     mGraphicsItem->updateCacheAndRepaint();
-}
-
-void BI_Via::updateNetPoints() const noexcept
-{
-    foreach (BI_NetPoint* point, mRegisteredNetPoints) {
-        point->setPosition(mPosition);
-    }
 }
 
 void BI_Via::serialize(SExpression& root) const

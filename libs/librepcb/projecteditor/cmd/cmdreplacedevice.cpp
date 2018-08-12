@@ -72,9 +72,9 @@ bool CmdReplaceDevice::performExecute()
     // remember which netpoints are connected to which component signal instance
     QHash<BI_NetPoint*, ComponentSignalInstance*> netpointSignalMapping;
     foreach (BI_FootprintPad* pad, mDeviceInstance.getFootprint().getPads()) {
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
-            netpointSignalMapping.insert(netpoint, pad->getComponentSignalInstance());
-        }
+        //foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
+        //    netpointSignalMapping.insert(netpoint, pad->getComponentSignalInstance());
+        //}
     }
 
     // disconnect all netpoints/netlines

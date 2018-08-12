@@ -77,9 +77,8 @@ class BI_Via final : public BI_Base, public SerializableObject
         Shape getShape() const noexcept {return mShape;}
         const PositiveLength& getDrillDiameter() const noexcept {return mDrillDiameter;}
         const PositiveLength& getSize() const noexcept {return mSize;}
-        const QMap<QString, BI_NetPoint*>& getNetPoints() const noexcept {return mRegisteredNetPoints;}
-        BI_NetPoint* getNetPointOfLayer(const QString& layerName) const noexcept {return mRegisteredNetPoints.value(layerName, nullptr);}
-        bool isUsed() const noexcept {return (mRegisteredNetPoints.count() > 0);}
+        BI_NetPoint* getNetPoint() const noexcept {return mRegisteredNetPoint;}
+        bool isUsed() const noexcept {return (mRegisteredNetPoint != nullptr);}
         bool isOnLayer(const QString& layerName) const noexcept;
         bool isSelectable() const noexcept override;
         Path getOutline(const Length& expansion = Length(0)) const noexcept;
@@ -97,7 +96,6 @@ class BI_Via final : public BI_Base, public SerializableObject
         void removeFromBoard() override;
         void registerNetPoint(BI_NetPoint& netpoint);
         void unregisterNetPoint(BI_NetPoint& netpoint);
-        void updateNetPoints() const noexcept;
 
         /// @copydoc librepcb::SerializableObject::serialize()
         void serialize(SExpression& root) const override;
@@ -135,7 +133,7 @@ class BI_Via final : public BI_Base, public SerializableObject
         PositiveLength mDrillDiameter;
 
         // Registered Elements
-        QMap<QString, BI_NetPoint*> mRegisteredNetPoints;   ///< key: layer name
+        BI_NetPoint* mRegisteredNetPoint;
 };
 
 /*****************************************************************************************

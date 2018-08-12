@@ -25,6 +25,7 @@
 #include <QPrinter>
 #include "bgi_netpoint.h"
 #include "../items/bi_netpoint.h"
+#include "../items/bi_netline.h"
 #include "../board.h"
 #include "../../project.h"
 #include "../boardlayerstack.h"
@@ -56,7 +57,12 @@ BGI_NetPoint::~BGI_NetPoint() noexcept
 
 bool BGI_NetPoint::isSelectable() const noexcept
 {
-    return mNetPoint.getLayer().isVisible();
+    foreach (const GraphicsLayer* layer, mNetPoint.getAllLayers()) {
+        if (layer->isVisible()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /*****************************************************************************************
@@ -70,7 +76,11 @@ void BGI_NetPoint::updateCacheAndRepaint() noexcept
     prepareGeometryChange();
 
     // set Z value
-    setZValue(getZValueOfCopperLayer(mNetPoint.getLayer().getName()));
+    qreal zvalue = 0;
+    foreach (const GraphicsLayer* layer, mNetPoint.getAllLayers()) {
+        zvalue = qMax(zvalue, getZValueOfCopperLayer(layer->getName()));
+    }
+    setZValue(zvalue);
 
     qreal radius = mNetPoint.getMaxLineWidth()->toPx() / 2;
     mBoundingRect = QRectF(-radius, -radius, 2*radius, 2*radius);
