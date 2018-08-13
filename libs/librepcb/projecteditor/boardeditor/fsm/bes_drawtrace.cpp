@@ -331,21 +331,22 @@ bool BES_DrawTrace::startPositioning(Board& board, const Point& pos,
         mUndoStack.beginCmdGroup(tr("Draw Board Trace"));
         mSubState = SubState_PositioningNetPoint;
 
+        // get layer
+        GraphicsLayer* layer = board.getLayerStack().getLayer(mCurrentLayerName);
+        if (!layer) {
+            throw RuntimeError(__FILE__, __LINE__,
+                QString(tr("No layer selected.")));
+        }
+
         // determine the fixed netpoint (create one if it doesn't exist already)
         if (fixedPoint) {
             mFixedNetPoint = fixedPoint;
         } else {
-            GraphicsLayer* layer = board.getLayerStack().getLayer(mCurrentLayerName);
-            if (!layer) {
-                throw RuntimeError(__FILE__, __LINE__,
-                    QString(tr("No layer selected.")));
-            }
             CmdPlaceBoardNetPoint* cmd = new CmdPlaceBoardNetPoint(board, pos, *layer);
             mUndoStack.appendToCmdGroup(cmd); // can throw
             mFixedNetPoint = cmd->getNetPoint();
         }
         Q_ASSERT(mFixedNetPoint);
-        GraphicsLayer* layer = &mFixedNetPoint->getLayer();
 
         // update the command toolbar
         mLayerComboBox->setCurrentIndex(mLayerComboBox->findData(layer->getName()));
@@ -353,10 +354,10 @@ bool BES_DrawTrace::startPositioning(Board& board, const Point& pos,
         // add more netpoints & netlines
         CmdBoardNetSegmentAddElements* cmd = new CmdBoardNetSegmentAddElements(
             mFixedNetPoint->getNetSegment());
-        BI_NetPoint* p2 = cmd->addNetPoint(*layer, pos); Q_ASSERT(p2); // second netpoint
-        BI_NetLine* l1 = cmd->addNetLine(*mFixedNetPoint, *p2, mCurrentWidth); Q_ASSERT(l1); // first netline
-        BI_NetPoint* p3 = cmd->addNetPoint(*layer, pos); Q_ASSERT(p3); // third netpoint
-        BI_NetLine* l2 = cmd->addNetLine(*p2, *p3, mCurrentWidth); Q_ASSERT(l2); // second netline
+        BI_NetPoint* p2 = cmd->addNetPoint(pos); Q_ASSERT(p2); // second netpoint
+        BI_NetLine* l1 = cmd->addNetLine(*mFixedNetPoint, *p2, *layer, mCurrentWidth); Q_ASSERT(l1); // first netline
+        BI_NetPoint* p3 = cmd->addNetPoint(pos); Q_ASSERT(p3); // third netpoint
+        BI_NetLine* l2 = cmd->addNetLine(*p2, *p3, *layer, mCurrentWidth); Q_ASSERT(l2); // second netline
         mUndoStack.appendToCmdGroup(cmd); // can throw
 
         // update members
