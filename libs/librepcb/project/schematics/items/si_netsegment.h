@@ -38,6 +38,8 @@ class NetSignal;
 class SI_NetPoint;
 class SI_NetLine;
 class SI_NetLabel;
+class SI_NetLineAnchor;
+class SI_SymbolPin;
 
 /*****************************************************************************************
  *  Class SI_NetSegment
@@ -121,7 +123,9 @@ class SI_NetSegment final : public SI_Base, public SerializableObject
     private:
         bool checkAttributesValidity() const noexcept;
         bool areAllNetPointsConnectedTogether() const noexcept;
-        void findAllConnectedNetPoints(const SI_NetPoint& p, QList<const SI_NetPoint*>& points) const noexcept;
+        void findAllConnectedNetPoints(const SI_NetLineAnchor& p,
+                                       QSet<const SI_SymbolPin*>& pins,
+                                       QSet<const SI_NetPoint*>& points) const noexcept;
 
 
         // Attributes

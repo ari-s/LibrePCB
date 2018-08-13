@@ -58,23 +58,6 @@ class BoardSelectionQuery final : public QObject
 
     public:
 
-        // Types
-        enum class NetPointFilter : uint32_t {
-            Floating = (1 << 0),
-            Attached = (1 << 1),
-            AllConnectedLinesSelected = (1 << 2),
-            All = (NetPointFilter::Floating | NetPointFilter::Attached)
-        };
-        Q_DECLARE_FLAGS(NetPointFilters, NetPointFilter)
-
-        enum class NetLineFilter : uint32_t {
-            Floating = (1 << 0),
-            Attached = (1 << 1),
-            All = (NetLineFilter::Floating | NetLineFilter::Attached)
-        };
-        Q_DECLARE_FLAGS(NetLineFilters, NetLineFilter)
-
-
         // Constructors / Destructor
         BoardSelectionQuery() = delete;
         BoardSelectionQuery(const BoardSelectionQuery& other) = delete;
@@ -103,9 +86,8 @@ class BoardSelectionQuery final : public QObject
         // General Methods
         void addSelectedFootprints() noexcept;
         void addSelectedVias() noexcept;
-        void addSelectedNetPoints(NetPointFilters f) noexcept;
-        void addSelectedNetLines(NetLineFilters f) noexcept;
-        void addNetPointsOfNetLines(NetLineFilters lf, NetPointFilters pf) noexcept;
+        void addSelectedNetPoints() noexcept;
+        void addSelectedNetLines() noexcept;
         void addSelectedPlanes() noexcept;
         void addSelectedPolygons() noexcept;
         void addSelectedBoardStrokeTexts() noexcept;
@@ -117,9 +99,6 @@ class BoardSelectionQuery final : public QObject
 
 
     private:
-
-        static bool doesNetPointMatchFilter(const BI_NetPoint& p, NetPointFilters f) noexcept;
-        static bool doesNetLineMatchFilter(const BI_NetLine& l, NetLineFilters f) noexcept;
 
         // references to the Board object
         const QMap<Uuid, BI_Device*>& mDevices;
@@ -140,9 +119,6 @@ class BoardSelectionQuery final : public QObject
         QSet<BI_StrokeText*> mResultStrokeTexts;
         QSet<BI_Hole*> mResultHoles;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(BoardSelectionQuery::NetPointFilters)
-Q_DECLARE_OPERATORS_FOR_FLAGS(BoardSelectionQuery::NetLineFilters)
 
 /*****************************************************************************************
  *  End of File
