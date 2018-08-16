@@ -112,6 +112,12 @@ NetSignal* SI_SymbolPin::getCompSigInstNetSignal() const noexcept
     }
 }
 
+SI_NetSegment* SI_SymbolPin::getNetSegmentOfLines() const noexcept
+{
+    auto it = mRegisteredNetLines.constBegin();
+    return (it != mRegisteredNetLines.constEnd()) ? &((*it)->getNetSegment()) : nullptr;
+}
+
 bool SI_SymbolPin::isRequired() const noexcept
 {
     if (mComponentSignalInstance) {
@@ -119,6 +125,11 @@ bool SI_SymbolPin::isRequired() const noexcept
     } else {
         return false;
     }
+}
+
+bool SI_SymbolPin::isVisibleJunction() const noexcept
+{
+    return (mRegisteredNetLines.count() > 1);
 }
 
 /*****************************************************************************************
@@ -139,6 +150,7 @@ void SI_SymbolPin::addToSchematic()
     }
     SI_Base::addToSchematic(mGraphicsItem.data());
     updateErcMessages();
+    mGraphicsItem->updateCacheAndRepaint();
 }
 
 void SI_SymbolPin::removeFromSchematic()
@@ -172,6 +184,7 @@ void SI_SymbolPin::registerNetLine(SI_NetLine& netline)
     mRegisteredNetLines.insert(&netline);
     netline.updateLine();
     updateErcMessages();
+    mGraphicsItem->updateCacheAndRepaint(); // re-check whether to fill the circle or not
 }
 
 void SI_SymbolPin::unregisterNetLine(SI_NetLine& netline)
@@ -182,6 +195,7 @@ void SI_SymbolPin::unregisterNetLine(SI_NetLine& netline)
     mRegisteredNetLines.remove(&netline);
     netline.updateLine();
     updateErcMessages();
+    mGraphicsItem->updateCacheAndRepaint(); // re-check whether to fill the circle or not
 }
 
 void SI_SymbolPin::updatePosition() noexcept

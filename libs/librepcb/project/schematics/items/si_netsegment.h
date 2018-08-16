@@ -73,6 +73,7 @@ class SI_NetSegment final : public SI_Base, public SerializableObject
         QSet<QString> getForcedNetNames() const noexcept;
         QString getForcedNetName() const noexcept;
         Point calcNearestPoint(const Point& p) const noexcept;
+        QSet<SI_SymbolPin*> getAllConnectedPins() const noexcept;
 
         // Setters
         void setNetSignal(NetSignal& netsignal);

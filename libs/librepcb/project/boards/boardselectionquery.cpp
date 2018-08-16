@@ -68,8 +68,7 @@ BoardSelectionQuery::~BoardSelectionQuery() noexcept
 
 int BoardSelectionQuery::getResultCount() const noexcept
 {
-    return  //mResultDeviceInstances.count() +
-            mResultFootprints.count() +
+    return  mResultDeviceInstances.count() +
             mResultNetPoints.count() +
             mResultNetLines.count() +
             mResultVias.count() +
@@ -83,11 +82,11 @@ int BoardSelectionQuery::getResultCount() const noexcept
  *  General Methods
  ****************************************************************************************/
 
-void BoardSelectionQuery::addSelectedFootprints() noexcept
+void BoardSelectionQuery::addDeviceInstancesOfSelectedFootprints() noexcept
 {
     foreach (BI_Device* device, mDevices) {
         if (device->getFootprint().isSelected()) {
-            mResultFootprints.insert(&device->getFootprint());
+            mResultDeviceInstances.insert(device);
         }
     }
 }
@@ -169,6 +168,16 @@ void BoardSelectionQuery::addSelectedHoles() noexcept
         if (hole->isSelected()) {
             mResultHoles.insert(hole);
         }
+    }
+}
+
+void BoardSelectionQuery::addNetPointsOfNetLines() noexcept
+{
+    foreach (BI_NetLine* netline, mResultNetLines) {
+        BI_NetPoint* p1 = dynamic_cast<BI_NetPoint*>(&netline->getStartPoint());
+        BI_NetPoint* p2 = dynamic_cast<BI_NetPoint*>(&netline->getEndPoint());
+        if (p1) mResultNetPoints.insert(p1);
+        if (p2) mResultNetPoints.insert(p2);
     }
 }
 

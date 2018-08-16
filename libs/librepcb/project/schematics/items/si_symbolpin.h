@@ -78,8 +78,10 @@ class SI_SymbolPin final : public SI_Base,
         const library::SymbolPin& getLibPin() const noexcept {return *mSymbolPin;}
         ComponentSignalInstance* getComponentSignalInstance() const noexcept {return mComponentSignalInstance;}
         NetSignal* getCompSigInstNetSignal() const noexcept;
+        SI_NetSegment* getNetSegmentOfLines() const noexcept;
         bool isRequired() const noexcept;
         bool isUsed() const noexcept {return (mRegisteredNetLines.count() > 0);}
+        bool isVisibleJunction() const noexcept;
 
         // General Methods
         void addToSchematic() override;

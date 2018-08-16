@@ -77,6 +77,7 @@ class BI_FootprintPad final : public BI_Base, public BI_NetLineAnchor
         bool isSelectable() const noexcept override;
         Path getOutline(const Length& expansion = Length(0)) const noexcept;
         Path getSceneOutline(const Length& expansion = Length(0)) const noexcept;
+        BI_NetSegment* getNetSegmentOfLines() const noexcept;
 
         // General Methods
         void addToBoard() override;

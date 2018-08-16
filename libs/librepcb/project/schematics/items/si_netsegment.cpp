@@ -185,7 +185,7 @@ QSet<QString> SI_NetSegment::getForcedNetNames() const noexcept
         SI_SymbolPin* pin1 = dynamic_cast<SI_SymbolPin*>(&netline->getStartPoint());
         SI_SymbolPin* pin2 = dynamic_cast<SI_SymbolPin*>(&netline->getEndPoint());
         ComponentSignalInstance* sig1 = pin1 ? pin1->getComponentSignalInstance() : nullptr;
-        ComponentSignalInstance* sig2 = pin2 ? pin1->getComponentSignalInstance() : nullptr;
+        ComponentSignalInstance* sig2 = pin2 ? pin2->getComponentSignalInstance() : nullptr;
         if (sig1 && sig1->isNetSignalNameForced()) names.insert(sig1->getForcedNetSignalName());
         if (sig2 && sig2->isNetSignalNameForced()) names.insert(sig2->getForcedNetSignalName());
     }
@@ -217,6 +217,20 @@ Point SI_NetSegment::calcNearestPoint(const Point& p) const noexcept
         }
     }
     return pos;
+}
+
+QSet<SI_SymbolPin*> SI_NetSegment::getAllConnectedPins() const noexcept
+{
+    Q_ASSERT(isAddedToSchematic());
+    QSet<SI_SymbolPin*> pins;
+    foreach (const SI_NetLine* netline, mNetLines) {
+        SI_SymbolPin* p1 = dynamic_cast<SI_SymbolPin*>(&netline->getStartPoint());
+        SI_SymbolPin* p2 = dynamic_cast<SI_SymbolPin*>(&netline->getEndPoint());
+        if (p1) { pins.insert(p1); Q_ASSERT(p1->getCompSigInstNetSignal() == mNetSignal); }
+        if (p2) { pins.insert(p2); Q_ASSERT(p2->getCompSigInstNetSignal() == mNetSignal); }
+    }
+
+    return pins;
 }
 
 /*****************************************************************************************

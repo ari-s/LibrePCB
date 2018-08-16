@@ -109,6 +109,25 @@ void SchematicSelectionQuery::addSelectedNetLabels() noexcept
     }
 }
 
+void SchematicSelectionQuery::addNetPointsOfNetLines() noexcept
+{
+    foreach (SI_NetLine* netline, mResultNetLines) {
+        SI_NetPoint* p1 = dynamic_cast<SI_NetPoint*>(&netline->getStartPoint());
+        SI_NetPoint* p2 = dynamic_cast<SI_NetPoint*>(&netline->getEndPoint());
+        if (p1) mResultNetPoints.insert(p1);
+        if (p2) mResultNetPoints.insert(p2);
+    }
+}
+
+void SchematicSelectionQuery::addNetLinesOfSymbolPins() noexcept
+{
+    foreach (SI_Symbol* symbol, mResultSymbols) {
+        foreach (SI_SymbolPin* pin, symbol->getPins()) {
+            mResultNetLines += pin->getNetLines();
+        }
+    }
+}
+
 /*****************************************************************************************
  *  End of File
  ****************************************************************************************/

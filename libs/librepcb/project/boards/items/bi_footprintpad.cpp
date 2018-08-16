@@ -216,6 +216,12 @@ Path BI_FootprintPad::getSceneOutline(const Length& expansion) const noexcept
     return getOutline(expansion).rotated(mRotation).translated(mPosition);
 }
 
+BI_NetSegment* BI_FootprintPad::getNetSegmentOfLines() const noexcept
+{
+    auto it = mRegisteredNetLines.constBegin();
+    return (it != mRegisteredNetLines.constEnd()) ? &((*it)->getNetSegment()) : nullptr;
+}
+
 /*****************************************************************************************
  *  Private Slots
  ****************************************************************************************/

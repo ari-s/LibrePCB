@@ -71,8 +71,7 @@ class BoardSelectionQuery final : public QObject
         ~BoardSelectionQuery() noexcept;
 
         // Getters
-        //const QSet<BI_Device*>& getDeviceInstances() const noexcept { return mResultDeviceInstances; }
-        const QSet<BI_Footprint*>& getFootprints() const noexcept { return mResultFootprints; }
+        const QSet<BI_Device*>& getDeviceInstances() const noexcept { return mResultDeviceInstances; }
         const QSet<BI_NetPoint*>& getNetPoints() const noexcept { return mResultNetPoints; }
         const QSet<BI_NetLine*>& getNetLines() const noexcept { return mResultNetLines; }
         const QSet<BI_Via*>& getVias() const noexcept { return mResultVias; }
@@ -84,7 +83,7 @@ class BoardSelectionQuery final : public QObject
         bool isResultEmpty() const noexcept { return (getResultCount() == 0); }
 
         // General Methods
-        void addSelectedFootprints() noexcept;
+        void addDeviceInstancesOfSelectedFootprints() noexcept;
         void addSelectedVias() noexcept;
         void addSelectedNetPoints() noexcept;
         void addSelectedNetLines() noexcept;
@@ -93,6 +92,7 @@ class BoardSelectionQuery final : public QObject
         void addSelectedBoardStrokeTexts() noexcept;
         void addSelectedFootprintStrokeTexts() noexcept;
         void addSelectedHoles() noexcept;
+        void addNetPointsOfNetLines() noexcept;
 
         // Operator Overloadings
         BoardSelectionQuery& operator=(const BoardSelectionQuery& rhs) = delete;
@@ -109,8 +109,7 @@ class BoardSelectionQuery final : public QObject
         const QList<BI_Hole*>& mHoles;
 
         // query result
-        //QSet<BI_Device*> mResultDeviceInstances;
-        QSet<BI_Footprint*> mResultFootprints;
+        QSet<BI_Device*> mResultDeviceInstances;
         QSet<BI_NetPoint*> mResultNetPoints;
         QSet<BI_NetLine*> mResultNetLines;
         QSet<BI_Via*> mResultVias;

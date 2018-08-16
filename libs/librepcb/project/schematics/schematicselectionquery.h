@@ -73,6 +73,8 @@ class SchematicSelectionQuery final : public QObject
         void addSelectedNetPoints() noexcept;
         void addSelectedNetLines() noexcept;
         void addSelectedNetLabels() noexcept;
+        void addNetPointsOfNetLines() noexcept;
+        void addNetLinesOfSymbolPins() noexcept;
 
         // Operator Overloadings
         SchematicSelectionQuery& operator=(const SchematicSelectionQuery& rhs) = delete;

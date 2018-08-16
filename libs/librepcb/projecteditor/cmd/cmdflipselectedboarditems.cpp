@@ -41,6 +41,7 @@
 #include <librepcb/project/boards/cmd/cmddeviceinstanceedit.h>
 #include <librepcb/project/boards/cmd/cmdboardviaedit.h>
 #include <librepcb/project/boards/cmd/cmdboardnetpointedit.h>
+#include <librepcb/project/boards/cmd/cmdboardnetsegmentremove.h>
 #include <librepcb/project/boards/boardselectionquery.h>
 
 /*****************************************************************************************
@@ -74,7 +75,7 @@ bool CmdFlipSelectedBoardItems::performExecute()
 
     // get all selected items
     std::unique_ptr<BoardSelectionQuery> query(mBoard.createSelectionQuery());
-    query->addSelectedFootprints();
+    query->addDeviceInstancesOfSelectedFootprints();
     query->addSelectedVias();
     query->addSelectedBoardStrokeTexts();
     query->addSelectedFootprintStrokeTexts();
@@ -83,8 +84,8 @@ bool CmdFlipSelectedBoardItems::performExecute()
     // find the center of all elements
     Point center = Point(0, 0);
     int count = 0;
-    foreach (BI_Footprint* footprint, query->getFootprints()) {
-        center += footprint->getPosition();
+    foreach (BI_Device* device, query->getDeviceInstances()) {
+        center += device->getPosition();
         ++count;
     }
     foreach (BI_Via* via, query->getVias()) {
@@ -93,7 +94,7 @@ bool CmdFlipSelectedBoardItems::performExecute()
     }
     foreach (BI_StrokeText* text, query->getStrokeTexts()) {
         // do not count texts of footprints if the footprint is selected too
-        if (!query->getFootprints().contains(text->getFootprint())) {
+        if (!query->getDeviceInstances().contains(&text->getFootprint()->getDeviceInstance())) {
             center += text->getPosition();
             ++count;
         }
@@ -171,8 +172,8 @@ bool CmdFlipSelectedBoardItems::performExecute()
     }
 
     // flip all device instances
-    foreach (BI_Footprint* footprint, query->getFootprints()) { Q_ASSERT(footprint);
-        CmdDeviceInstanceEdit* cmd = new CmdDeviceInstanceEdit(footprint->getDeviceInstance());
+    foreach (BI_Device* device, query->getDeviceInstances()) { Q_ASSERT(device);
+        CmdDeviceInstanceEdit* cmd = new CmdDeviceInstanceEdit(*device);
         cmd->mirror(center, mOrientation, false); // can throw
         execNewChildCmd(cmd); // can throw
     }
@@ -208,12 +209,11 @@ bool CmdFlipSelectedBoardItems::performExecute()
 
 void CmdFlipSelectedBoardItems::flipDevice(BI_Device& device, const Point& center)
 {
-    // disconnect all netpoints/netlines
+    // remove all connected netlines
     foreach (BI_FootprintPad* pad, device.getFootprint().getPads()) {
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
-            CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(*netpoint);
-            cmd->setPadToAttach(nullptr);
-            execNewChildCmd(cmd); // can throw
+        BI_NetSegment* netsegment = pad->getNetSegmentOfLines();
+        if (netsegment) {
+            execNewChildCmd(new CmdBoardNetSegmentRemove(*netsegment)); // can throw
         }
     }
 
@@ -222,18 +222,7 @@ void CmdFlipSelectedBoardItems::flipDevice(BI_Device& device, const Point& cente
     cmd->mirror(center, mOrientation, false); // can throw
     execNewChildCmd(cmd); // can throw
 
-    // reconnect all netpoints/netlines and change netline layers if required
-    foreach (BI_FootprintPad* pad, device.getFootprint().getPads()) {
-        //if (pad->getLibPad().getTechnology() == library::FootprintPad::Technology_t::SMT) {
-        //    // netline/netpoint must be flipped too (place via and change layer)
-        //
-        //}
-        foreach (BI_NetPoint* netpoint, pad->getNetPoints()) {
-            CmdBoardNetPointEdit* cmd = new CmdBoardNetPointEdit(*netpoint);
-            cmd->setPadToAttach(pad);
-            execNewChildCmd(cmd); // can throw
-        }
-    }
+    // TODO: reconnect all netlines and change netline layers if required
 }
 
 /*****************************************************************************************
